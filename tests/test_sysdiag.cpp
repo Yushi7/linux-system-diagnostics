@@ -167,6 +167,10 @@ TEST(CpuTest, RejectsMissingAndMalformedStatistics)
     EXPECT_THROW(static_cast<void>(sysdiag::read_cpu_times(directory.path() / "stat")),
                  std::runtime_error);
 
+    directory.write("stat", "cpu -1 2 3 4\n");
+    EXPECT_THROW(static_cast<void>(sysdiag::read_cpu_times(directory.path() / "stat")),
+                 std::runtime_error);
+
     directory.write("stat", "cpu0 1 2 3 4\n");
     EXPECT_THROW(static_cast<void>(sysdiag::read_cpu_times(directory.path() / "stat")),
                  std::runtime_error);
@@ -245,6 +249,10 @@ TEST(MemoryTest, RejectsMissingRequiredValuesAndMalformedUnits)
     directory.write("meminfo", "MemTotal: 100 kB\nMemFree: 101 kB\n");
     EXPECT_THROW(static_cast<void>(sysdiag::read_memory_stats(directory.path() / "meminfo")),
                  std::runtime_error);
+
+    directory.write("meminfo", "MemTotal: -1 kB\nMemFree: 1 kB\n");
+    EXPECT_THROW(static_cast<void>(sysdiag::read_memory_stats(directory.path() / "meminfo")),
+                 std::runtime_error);
 }
 
 TEST(ProcessTest, SortsNumericPidsAndReportsOptionalResidentMemory)
@@ -273,6 +281,18 @@ TEST(ProcessTest, TreatsMalformedResidentMemoryAsUnavailable)
     TemporaryDirectory directory;
     directory.write("21/comm", "test-process\n");
     directory.write("21/status", "VmRSS:\tunknown kB\n");
+
+    const auto processes = sysdiag::list_processes(directory.path());
+
+    ASSERT_EQ(processes.size(), 1U);
+    EXPECT_FALSE(processes[0].resident_memory_kib.has_value());
+}
+
+TEST(ProcessTest, TreatsNegativeResidentMemoryAsUnavailable)
+{
+    TemporaryDirectory directory;
+    directory.write("22/comm", "negative-rss\n");
+    directory.write("22/status", "VmRSS:\t-1 kB\n");
 
     const auto processes = sysdiag::list_processes(directory.path());
 

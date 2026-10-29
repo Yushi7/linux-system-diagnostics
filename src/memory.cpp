@@ -1,11 +1,13 @@
 #include "sysdiag/memory.hpp"
 
 #include <algorithm>
+#include <charconv>
 #include <fstream>
 #include <limits>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 
 namespace sysdiag
 {
@@ -32,9 +34,9 @@ namespace sysdiag
         {
             std::istringstream row(line);
             std::string key;
-            std::uint64_t value{};
+            std::string value_text;
             std::string unit;
-            if (!(row >> key >> value))
+            if (!(row >> key >> value_text))
             {
                 continue;
             }
@@ -44,6 +46,16 @@ namespace sysdiag
                 key != "Cached:")
             {
                 continue;
+            }
+
+            std::uint64_t value{};
+            const auto result = std::from_chars(
+                value_text.data(), value_text.data() + value_text.size(), value);
+            if (result.ec != std::errc{} ||
+                result.ptr != value_text.data() + value_text.size())
+            {
+                throw std::runtime_error("Malformed memory value in " +
+                                         meminfo.string());
             }
             if (!(row >> unit) || unit != "kB")
             {

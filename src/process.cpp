@@ -60,9 +60,18 @@ namespace sysdiag
                     continue;
                 }
 
-                std::uint64_t value{};
+                std::string value_text;
                 std::string unit;
-                if (!(row >> value >> unit) || unit != "kB")
+                if (!(row >> value_text >> unit) || unit != "kB")
+                {
+                    return std::nullopt;
+                }
+
+                std::uint64_t value{};
+                const auto result = std::from_chars(
+                    value_text.data(), value_text.data() + value_text.size(), value);
+                if (result.ec != std::errc{} ||
+                    result.ptr != value_text.data() + value_text.size())
                 {
                     return std::nullopt;
                 }

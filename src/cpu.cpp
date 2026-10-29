@@ -1,9 +1,11 @@
 #include "sysdiag/cpu.hpp"
 
+#include <charconv>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <vector>
 
 namespace sysdiag
@@ -51,12 +53,21 @@ namespace sysdiag
         }
 
         std::vector<std::uint64_t> counters;
-        std::uint64_t counter{};
-        while (row >> counter)
+        std::string token;
+        while (row >> token)
         {
+            std::uint64_t counter{};
+            const auto result = std::from_chars(
+                token.data(), token.data() + token.size(), counter);
+            if (result.ec != std::errc{} ||
+                result.ptr != token.data() + token.size())
+            {
+                throw std::runtime_error("Malformed aggregate CPU statistics in " +
+                                         proc_stat.string());
+            }
             counters.push_back(counter);
         }
-        if (!row.eof() || counters.size() < 4)
+        if (counters.size() < 4)
         {
             throw std::runtime_error("Malformed aggregate CPU statistics in " +
                                      proc_stat.string());

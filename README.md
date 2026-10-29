@@ -152,17 +152,23 @@ Estimated monitoring work was **1.16%** of the configured 250 ms interval. These
 
 Kernel modules, device drivers, kernel/userspace communication, and CUDA monitoring are not implemented in this release. They are excluded from the Phase 1–7 completion claim and are not required to build, use, test, or release this userspace toolkit.
 
-## GitHub Preparation
 
-The source workspace has an initial local checkpoint, but final audit fixes may be uncommitted and no GitHub remote is configured. Review the working tree and tests, then manually create a GitHub repository and publish when ready:
+## Release Status
+
+The Phase 1–7 userspace release has been committed and published to GitHub.
+
+- **Repository:** [linux-system-diagnostics](https://github.com/Yushi7/linux-system-diagnostics)
+- **Scope:** Linux userspace diagnostics in C++20
+- **Kernel module and driver development:** Not implemented; explicitly out of scope for this release.
+- **Automated tests:** 16 passed, 0 failed in the recorded Ubuntu 24.04 / WSL2 verification run.
+
+To verify the current checkout:
 
 ```bash
-git status --short
-git add .gitignore CMakeLists.txt README.md benchmarks include src tests
-git diff --cached --check
-git commit -m "Finalize Linux userspace diagnostics release"
-git remote add origin https://github.com/YOUR_ACCOUNT/YOUR_REPOSITORY.git
-git push -u origin main
+git status
+git log -1 --oneline
 ```
 
-Replace the remote URL with your repository. Authenticate with GitHub's supported credential flow; do not put tokens or passwords in the remote URL. The existing `.vscode/settings.json` is intentionally excluded. These commands are a manual release checklist; no remote or push has been created by this project workflow.
+To rebuild and rerun the tests, follow the instructions in the Build and Test section above. Test results and benchmark timings may vary across environments.
+
+Future changes should be reviewed, tested, and committed before being pushed to the repository.
